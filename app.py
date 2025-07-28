@@ -3,6 +3,10 @@ from fetch_data import get_stock_data
 import plotly.graph_objs as go
 import pandas as pd
 
+# Initialize favorites in session state
+if "favorites" not in st.session_state:
+    st.session_state["favorites"] = []
+
 # Streamlit UI setup
 st.set_page_config(page_title="Real-Time Stock Dashboard", layout="wide")
 st.title("📈 Real-Time Stock Market Dashboard")
@@ -10,10 +14,31 @@ st.title("📈 Real-Time Stock Market Dashboard")
 # Sidebar options
 st.sidebar.header("Select Options")
 
+# Favorites management UI in sidebar
+st.sidebar.header("Favorite Tickers")
+
+# Input box to add a ticker
+new_fav = st.sidebar.text_input("Add a favorite ticker (e.g. AAPL)").upper()
+
+if st.sidebar.button("Add to Favorites") and new_fav:
+    if new_fav not in st.session_state.favorites:
+        st.session_state.favorites.append(new_fav)
+
+# Show favorites with remove buttons, arranged in columns
+for ticker in st.session_state.favorites:
+    col1, col2 = st.sidebar.columns([3, 1])
+    with col1:
+        st.write(ticker)
+    with col2:
+        if st.button(f"Remove {ticker}"):
+            st.session_state.favorites.remove(ticker)
+            st.experimental_rerun()  # rerun to update UI
+
+# Use only favorites or fallback defaults for ticker selection
 tickers = st.sidebar.multiselect(
     "Select Stock Tickers (Up to 3)",
-    options=["AAPL", "GOOGL", "MSFT", "TSLA", "AMZN", "META", "NFLX"],
-    default=["AAPL", "GOOGL"],
+    options=st.session_state.favorites if st.session_state.favorites else ["AAPL", "GOOGL", "MSFT", "TSLA"],
+    default=st.session_state.favorites[:3] if st.session_state.favorites else ["AAPL", "GOOGL"]
 )
 
 if len(tickers) == 0:
@@ -23,6 +48,7 @@ if len(tickers) > 3:
     st.sidebar.error("Please select up to 3 tickers only.")
     tickers = tickers[:3]  # limit to first 3 tickers
 
+# Period and interval selectors
 period = st.sidebar.selectbox("Select Period", ["1d", "5d", "1mo", "3mo", "6mo", "1y"])
 interval = st.sidebar.selectbox("Data Interval", ["1m", "5m", "15m", "30m", "1h", "1d"])
 
@@ -32,8 +58,9 @@ show_sma = st.sidebar.checkbox("Show SMA (20)", value=True)
 show_ema = st.sidebar.checkbox("Show EMA (20)", value=True)
 show_rsi = st.sidebar.checkbox("Show RSI (14)")
 show_macd = st.sidebar.checkbox("Show MACD")
-show_bbands = st.sidebar.checkbox("Show Bollinger Bands")  # New checkbox added here
+show_bbands = st.sidebar.checkbox("Show Bollinger Bands")  # New checkbox added
 
+# Indicator Calculation Functions
 def calculate_rsi(data, window=14):
     delta = data.diff()
     gain = delta.clip(lower=0)
@@ -69,11 +96,11 @@ if tickers:
     )
     st.plotly_chart(multi_fig, use_container_width=True)
 
+# --- Single Ticker Indicator Section ---
 if tickers:
-    # Fetch data for all tickers and combine closing prices into one DataFrame
     close_prices = pd.DataFrame()
+    dfs = {}
 
-    dfs = {}  # store each ticker's dataframe for indicators (optional)
     for t in tickers:
         df = get_stock_data(t, period=period, interval=interval)
         if not df.empty:
@@ -83,12 +110,10 @@ if tickers:
             st.warning(f"No data found for {t}")
 
     if not close_prices.empty:
-        # Optionally, show indicators for each ticker (for now, just first ticker selected)
         first_ticker = tickers[0]
         df = dfs[first_ticker]
 
         if not df.empty:
-            # Calculate indicators for the first ticker only (to avoid clutter)
             if show_sma:
                 df["SMA_20"] = df["Close"].rolling(window=20).mean()
             if show_bbands:
@@ -137,7 +162,6 @@ if tickers:
             )
             st.plotly_chart(fig_ind, use_container_width=True)
 
-            # RSI Plot
             if show_rsi and "RSI_14" in df.columns:
                 st.subheader("RSI (14)")
                 fig_rsi = go.Figure()
@@ -145,7 +169,6 @@ if tickers:
                 fig_rsi.update_layout(yaxis=dict(range=[0, 100]), xaxis_title="Date", yaxis_title="RSI")
                 st.plotly_chart(fig_rsi, use_container_width=True)
 
-            # MACD Plot
             if show_macd and "MACD" in df.columns:
                 st.subheader("MACD")
                 fig_macd = go.Figure()
@@ -153,10 +176,8 @@ if tickers:
                 fig_macd.add_trace(go.Scatter(x=df.index, y=df["Signal"], name="Signal", line=dict(color="red")))
                 st.plotly_chart(fig_macd, use_container_width=True)
 
-            # Display last few rows of data
             st.dataframe(df.tail(10))
 
-            # CSV Download Button for first ticker
             csv = df.to_csv().encode('utf-8')
             st.download_button(
                 label=f"📥 Download {first_ticker.upper()} CSV",
@@ -166,6 +187,5 @@ if tickers:
             )
     else:
         st.error("No valid data available for selected tickers.")
-
 else:
     st.info("Select at least one ticker to see data.")
