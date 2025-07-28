@@ -1,7 +1,11 @@
 import streamlit as st
 from fetch_data import get_stock_data
+from news_fetch import fetch_news  # ⬅️ Import fetch_news function
 import plotly.graph_objs as go
 import pandas as pd
+
+# NewsAPI key (replace with a secure method for production)
+NEWS_API_KEY = "5de41c99dc8944a589022901e9d02d0a"
 
 # Initialize favorites in session state
 if "favorites" not in st.session_state:
@@ -24,7 +28,7 @@ if st.sidebar.button("Add to Favorites") and new_fav:
     if new_fav not in st.session_state.favorites:
         st.session_state.favorites.append(new_fav)
 
-# Show favorites with remove buttons, arranged in columns
+# Show favorites with remove buttons
 for ticker in st.session_state.favorites:
     col1, col2 = st.sidebar.columns([3, 1])
     with col1:
@@ -32,7 +36,7 @@ for ticker in st.session_state.favorites:
     with col2:
         if st.button(f"Remove {ticker}"):
             st.session_state.favorites.remove(ticker)
-            st.experimental_rerun()  # rerun to update UI
+            st.experimental_rerun()
 
 # Use only favorites or fallback defaults for ticker selection
 tickers = st.sidebar.multiselect(
@@ -46,7 +50,7 @@ if len(tickers) == 0:
 
 if len(tickers) > 3:
     st.sidebar.error("Please select up to 3 tickers only.")
-    tickers = tickers[:3]  # limit to first 3 tickers
+    tickers = tickers[:3]
 
 # Period and interval selectors
 period = st.sidebar.selectbox("Select Period", ["1d", "5d", "1mo", "3mo", "6mo", "1y"])
@@ -58,9 +62,9 @@ show_sma = st.sidebar.checkbox("Show SMA (20)", value=True)
 show_ema = st.sidebar.checkbox("Show EMA (20)", value=True)
 show_rsi = st.sidebar.checkbox("Show RSI (14)")
 show_macd = st.sidebar.checkbox("Show MACD")
-show_bbands = st.sidebar.checkbox("Show Bollinger Bands")  # New checkbox added
+show_bbands = st.sidebar.checkbox("Show Bollinger Bands")
 
-# Indicator Calculation Functions
+# Indicator calculation functions
 def calculate_rsi(data, window=14):
     delta = data.diff()
     gain = delta.clip(lower=0)
@@ -136,30 +140,13 @@ if tickers:
                 fig_ind.add_trace(go.Scatter(x=df.index, y=df["SMA_20"], mode="lines", name="SMA (20)"))
 
             if show_bbands and all(x in df.columns for x in ["Upper_Band", "Lower_Band"]):
-                fig_ind.add_trace(go.Scatter(
-                    x=df.index,
-                    y=df["Upper_Band"],
-                    mode="lines",
-                    name="Upper Band",
-                    line=dict(color="grey", dash='dash')
-                ))
-                fig_ind.add_trace(go.Scatter(
-                    x=df.index,
-                    y=df["Lower_Band"],
-                    mode="lines",
-                    name="Lower Band",
-                    line=dict(color="grey", dash='dash')
-                ))
+                fig_ind.add_trace(go.Scatter(x=df.index, y=df["Upper_Band"], mode="lines", name="Upper Band", line=dict(color="grey", dash='dash')))
+                fig_ind.add_trace(go.Scatter(x=df.index, y=df["Lower_Band"], mode="lines", name="Lower Band", line=dict(color="grey", dash='dash')))
 
             if show_ema:
                 fig_ind.add_trace(go.Scatter(x=df.index, y=df["EMA_20"], mode="lines", name="EMA (20)"))
 
-            fig_ind.update_layout(
-                title=f"{first_ticker.upper()} Price with Indicators",
-                xaxis_title="Time",
-                yaxis_title="Price (USD)",
-                legend_title="Legend"
-            )
+            fig_ind.update_layout(title=f"{first_ticker.upper()} Price with Indicators", xaxis_title="Time", yaxis_title="Price (USD)")
             st.plotly_chart(fig_ind, use_container_width=True)
 
             if show_rsi and "RSI_14" in df.columns:
@@ -185,6 +172,19 @@ if tickers:
                 file_name=f"{first_ticker}_data.csv",
                 mime='text/csv'
             )
+
+            # --- 📰 News Section ---
+            st.subheader(f"📰 Latest News for {first_ticker.upper()}")
+            articles = fetch_news(first_ticker, NEWS_API_KEY)
+
+            if articles:
+                for article in articles:
+                    st.markdown(f"**[{article['title']}]({article['url']})**  \n"
+                                f"*{article['source']['name']} – {article['publishedAt'][:10]}*  \n"
+                                f"{article['description']}\n")
+                    st.markdown("---")
+            else:
+                st.info("No recent news articles found.")
     else:
         st.error("No valid data available for selected tickers.")
 else:
