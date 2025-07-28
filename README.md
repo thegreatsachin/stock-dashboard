@@ -1,4 +1,4 @@
-\# 📈 Stock Dashboard
+# 📈 Stock Dashboard
 
 
 
@@ -6,7 +6,7 @@ An interactive dashboard to visualize real-time stock data with indicators like 
 
 
 
-\## 🌐 Live App
+## 🌐 Live App
 
 
 
@@ -14,23 +14,23 @@ View the dashboard here: \[Streamlit App](https://thegreatsachin-stock-dashboard
 
 
 
-\## 🚀 Features
+## 🚀 Features
 
 
 
-\- Real-time stock data
+- Real-time stock data
 
-\- Select custom period and interval
+- Select custom period and interval
 
-\- Calculate and display SMA (Simple Moving Average)
+- Calculate and display SMA (Simple Moving Average)
 
-\- Calculate and display EMA (Exponential Moving Average)
+- Calculate and display EMA (Exponential Moving Average)
 
-\- Interactive Plotly charts with zoom and hover
+- Interactive Plotly charts with zoom and hover
 
 
 
-\## 🛠️ Installation
+## 🛠️ Installation
 
 
 
@@ -44,5 +44,4 @@ git clone https://github.com/thegreatsachin/stock-dashboard.git
 
 cd stock-dashboard
 
-
-
+```
