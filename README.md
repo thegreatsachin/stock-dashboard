@@ -2,7 +2,7 @@
 
 
 
-An interactive dashboard to visualize real-time stock data with indicators like SMA and EMA using Streamlit and Plotly.
+An interactive dashboard to visualize real-time stock data with indicators like SMA, EMA, and Bollinger Bands, along with a stock-related news feed using NewsAPI. Built with Streamlit and Plotly.
 
 
 
@@ -10,7 +10,7 @@ An interactive dashboard to visualize real-time stock data with indicators like 
 
 
 
-View the dashboard here: \[Streamlit App](https://thegreatsachin-stock-dashboard.streamlit.app/)
+View the dashboard here: [Streamlit App](https://thegreatsachin-stock-dashboard.streamlit.app/)
 
 
 
@@ -25,6 +25,10 @@ View the dashboard here: \[Streamlit App](https://thegreatsachin-stock-dashboard
 - Calculate and display SMA (Simple Moving Average)
 
 - Calculate and display EMA (Exponential Moving Average)
+
+- Calculate and display Bollinger Bands indicator
+
+- Stock-related news feed powered by NewsAPI
 
 - Interactive Plotly charts with zoom and hover
 
