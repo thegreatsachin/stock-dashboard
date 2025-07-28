@@ -32,6 +32,7 @@ show_sma = st.sidebar.checkbox("Show SMA (20)", value=True)
 show_ema = st.sidebar.checkbox("Show EMA (20)", value=True)
 show_rsi = st.sidebar.checkbox("Show RSI (14)")
 show_macd = st.sidebar.checkbox("Show MACD")
+show_bbands = st.sidebar.checkbox("Show Bollinger Bands")  # New checkbox added here
 
 def calculate_rsi(data, window=14):
     delta = data.diff()
@@ -90,6 +91,10 @@ if tickers:
             # Calculate indicators for the first ticker only (to avoid clutter)
             if show_sma:
                 df["SMA_20"] = df["Close"].rolling(window=20).mean()
+            if show_bbands:
+                df["STDDEV_20"] = df["Close"].rolling(window=20).std()
+                df["Upper_Band"] = df["SMA_20"] + (2 * df["STDDEV_20"])
+                df["Lower_Band"] = df["SMA_20"] - (2 * df["STDDEV_20"])
             if show_ema:
                 df["EMA_20"] = df["Close"].ewm(span=20, adjust=False).mean()
             if show_rsi:
@@ -104,6 +109,23 @@ if tickers:
 
             if show_sma:
                 fig_ind.add_trace(go.Scatter(x=df.index, y=df["SMA_20"], mode="lines", name="SMA (20)"))
+
+            if show_bbands and all(x in df.columns for x in ["Upper_Band", "Lower_Band"]):
+                fig_ind.add_trace(go.Scatter(
+                    x=df.index,
+                    y=df["Upper_Band"],
+                    mode="lines",
+                    name="Upper Band",
+                    line=dict(color="grey", dash='dash')
+                ))
+                fig_ind.add_trace(go.Scatter(
+                    x=df.index,
+                    y=df["Lower_Band"],
+                    mode="lines",
+                    name="Lower Band",
+                    line=dict(color="grey", dash='dash')
+                ))
+
             if show_ema:
                 fig_ind.add_trace(go.Scatter(x=df.index, y=df["EMA_20"], mode="lines", name="EMA (20)"))
 

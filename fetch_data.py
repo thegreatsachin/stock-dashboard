@@ -4,7 +4,7 @@ import pandas as pd
 def get_stock_data(ticker: str, period='1mo', interval='1d') -> pd.DataFrame:
     """
     Fetches historical stock data for the given ticker and adds technical indicators:
-    SMA, EMA, RSI, and MACD.
+    SMA, EMA, RSI, MACD, and Bollinger Bands.
 
     Args:
         ticker (str): Stock ticker symbol (e.g., 'AAPL')
@@ -20,6 +20,11 @@ def get_stock_data(ticker: str, period='1mo', interval='1d') -> pd.DataFrame:
     if not df.empty:
         # Simple Moving Average
         df["SMA_20"] = df["Close"].rolling(window=20).mean()
+
+        # Bollinger Bands
+        df["STDDEV_20"] = df["Close"].rolling(window=20).std()
+        df["Upper_Band"] = df["SMA_20"] + (2 * df["STDDEV_20"])
+        df["Lower_Band"] = df["SMA_20"] - (2 * df["STDDEV_20"])
 
         # Exponential Moving Average
         df["EMA_20"] = df["Close"].ewm(span=20, adjust=False).mean()
